@@ -4,6 +4,7 @@ import { ModalNameType } from 'data/modals/types'
 // State
 export type GoalsType =
   | 'airdropClaim'
+  | 'authExternal'
   | 'kyc'
   | 'kycDocResubmit'
   | 'linkAccount'
@@ -21,7 +22,7 @@ export type GoalsType =
   | 'interest'
   | 'interestPromo'
 
-export type GoalType = { data: any; id: string; name: GoalsType }
+export type GoalType = { data: never; id: string; name: GoalsType }
 export type SimpleBuyWidgetGoalDataType = {
   amount: string
   crypto: CoinType
@@ -34,13 +35,14 @@ export type GoalsState = {
   initialModalDisplayed: boolean
   initialModals:
     | {
-        [key in GoalsType]: { data: any; key: key; name: ModalNameType }
+        [key in GoalsType]: { data: never; key: key; name: ModalNameType }
       }
     | {}
   initialRedirect: string
 }
 
 export enum DeepLinkGoal {
+  AUTH_EXTERNAL = 'auth',
   BITCOIN = 'bitcoin',
   INTEREST = 'interest',
   KYC = 'kyc',

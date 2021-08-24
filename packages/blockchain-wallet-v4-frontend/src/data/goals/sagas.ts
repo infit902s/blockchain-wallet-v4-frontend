@@ -1,7 +1,7 @@
 import base64 from 'base-64'
 import BigNumber from 'bignumber.js'
 import bip21 from 'bip21'
-import { anyPass, equals, includes, map, path, pathOr, prop, startsWith, sum, values } from 'ramda'
+import { anyPass, equals, includes, map, path, pathOr, prop, startsWith } from 'ramda'
 import { all, call, delay, join, put, select, spawn, take } from 'redux-saga/effects'
 
 import { Exchange, utils } from 'blockchain-wallet-v4/src'
@@ -39,6 +39,16 @@ export default ({ api, coreSagas, networks }) => {
     return (yield select(selectors.modules.profile.getUserKYCState))
       .map(equals(NONE))
       .getOrElse(false)
+  }
+
+  const defineAuthExternalGoal = function* (search) {
+    const params = new URLSearchParams(search)
+    yield put(
+      actions.goals.saveGoal('authExternal', {
+        app: params.get('app'),
+        redirect: params.get('redirect')
+      })
+    )
   }
 
   const defineLinkAccountGoal = function* (search) {
@@ -155,6 +165,12 @@ export default ({ api, coreSagas, networks }) => {
   }
 
   const defineDeepLinkGoals = function* (pathname, search) {
+    // /#/open/auth?app={app}?redirect={?path}
+    // http://localhost:8080/#/open/auth?app=exchange&redirect=profile
+    if (startsWith(DeepLinkGoal.AUTH_EXTERNAL, pathname)) {
+      return yield call(defineAuthExternalGoal, search)
+    }
+
     if (startsWith(DeepLinkGoal.LINK_ACCOUNT, pathname)) {
       return yield call(defineLinkAccountGoal, search)
     }
@@ -163,12 +179,11 @@ export default ({ api, coreSagas, networks }) => {
       return yield call(defineReferralGoal, search)
     }
 
-    // /#/open/kyc?tier={0 | 1 | 2 | ...} tier is optional
+    // /#/open/kyc?tier={0 | 1 | 2 | ...} (tier is optional)
     if (startsWith(DeepLinkGoal.KYC, pathname)) {
       return yield call(defineKycGoal, search)
     }
 
-    // TODO check why it uses includes
     // crypto send / bitpay links
     if (includes(DeepLinkGoal.BITCOIN, pathname)) {
       return yield call(defineSendCryptoGoal, pathname, search)
